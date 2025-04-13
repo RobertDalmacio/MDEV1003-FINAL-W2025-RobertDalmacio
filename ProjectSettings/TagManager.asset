@@ -3,7 +3,9 @@
 --- !u!78 &1
 TagManager:
   serializedVersion: 3
-  tags: []
+  tags:
+  - Platform
+  - GameOver
   layers:
   - Default
   - TransparentFX
@@ -43,6 +45,9 @@ TagManager:
     locked: 0
   - name: Game Objects
     uniqueID: 1194123257
+    locked: 0
+  - name: UI
+    uniqueID: 512000805
     locked: 0
   m_RenderingLayers:
   - Default
