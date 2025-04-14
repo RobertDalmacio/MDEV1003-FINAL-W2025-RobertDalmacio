@@ -6,11 +6,13 @@ public class IceSpikeController : MonoBehaviour
     public float fadeDuration = 1.5f; // Time it takes to fade out before destroying the object
     private SpriteRenderer spriteRenderer; // Reference to the SpriteRenderer
     private bool isFading = false; // Flag to check if fading has started
+    public UIManager uiManager; // Reference to the UIManager
 
     void Start()
     {
-        // Get the SpriteRenderer component
+        // Get the SpriteRenderer and UIManager component
         spriteRenderer = GetComponent<SpriteRenderer>();
+        uiManager = FindFirstObjectByType<UIManager>();
     }
 
     void OnCollisionEnter2D(Collision2D other)
@@ -20,6 +22,13 @@ public class IceSpikeController : MonoBehaviour
         {
             // Start fading out the ice spike
             StartCoroutine(FadeOutAndDestroy());
+        }
+        // Check if the collided object is the player
+        if (other.gameObject.CompareTag("Player"))
+        {
+            Debug.Log("GameOver!");
+            // Show the Game Over menu
+            uiManager.GameOver();
         }
     }
 

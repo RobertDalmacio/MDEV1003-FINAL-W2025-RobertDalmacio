@@ -1,13 +1,20 @@
 using UnityEngine;
 using System.Collections;
+using UnityEngine.UI;
 
 public class PlayerManager : MonoBehaviour
 {
-
     private Animator animator; // Reference to the Animator
     private Rigidbody2D rb; // Reference to the Rigidbody2D
     public UIManager uiManager; // Reference to the UIManager
     public float playerSpeed; // Speed of the player
+    public Transform groundCheck; // Transform to check if the player is grounded
+    public float groundCheckRadius = 0.2f; // Radius for ground check
+    private bool isRunning = false; // Track if the player is running
+    private bool isJumping = false; // Track if the player is jumping
+    private bool isGrounded = false; // Track if the player is on the ground
+    private bool isRunButtonPressed = false; // Track if the RunButton is pressed
+    private bool isKeyboardRunning = false; // Track if the keyboard keys are pressed for running
 
     void Start()
     {
@@ -18,26 +25,69 @@ public class PlayerManager : MonoBehaviour
 
     void Update()
     {
-        // Idle to Running
-        if ((Input.GetKey(KeyCode.RightArrow) || Input.GetKey(KeyCode.D)) && !Input.GetKey(KeyCode.Space))
+        // Reset grounded state
+        isGrounded = false;
+        
+        // List all colliders within the ground check radius
+        Collider2D[] colliders = Physics2D.OverlapCircleAll(groundCheck.position, groundCheckRadius);
+        
+        // Check if any of the colliders are tagged as "Platform"
+        foreach (Collider2D collider in colliders)
+        {
+            if (collider.CompareTag("Platform"))
+            {
+                // If the player is touching a platform, set isGrounded to true
+                isGrounded = true;
+                break;
+            }
+        }
+
+        // Handle running input from the keyboard
+        if (Input.GetKey(KeyCode.RightArrow) || Input.GetKey(KeyCode.D))
+        {
+            isKeyboardRunning = true;
+        }
+        else
+        {
+            isKeyboardRunning = false;
+        }
+
+        // Determine if the player should be running
+        if (isKeyboardRunning || isRunButtonPressed)
+        {
+            OnRunButtonDown();
+        }
+        else
+        {
+            OnRunButtonUp();
+        }
+
+        // Handle jumping input
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            OnJumpButtonDown();
+        }
+
+        // Handle running
+        if (isRunning && !isJumping)
         {
             // Show the running animation
             animator.SetInteger("State", 1);
-            
+
             // Move the player to the right
             rb.linearVelocity = new Vector2(playerSpeed, rb.linearVelocity.y);
         }
-        else if (!Input.GetKey(KeyCode.RightArrow) && !Input.GetKey(KeyCode.D))
+        else if (!isRunning)
         {
-            // Stop horizontal movement when the key is released
+            // Stop horizontal movement when running stops
             rb.linearVelocity = new Vector2(0, rb.linearVelocity.y);
-            
+
             // Return to idle animation
             animator.SetInteger("State", 0);
         }
-        
-        // Idle to Jumping
-        if (Input.GetKeyDown(KeyCode.Space))
+
+        // Handle jumping
+        if (isJumping && isGrounded)
         {
             // Show the jumping animation
             animator.SetInteger("State", 2);
@@ -47,16 +97,9 @@ public class PlayerManager : MonoBehaviour
 
             // Return to idle animation after a delay
             StartCoroutine(StateTransition(0.5f));
-        }
-
-        // Running to Jumping
-        if ((Input.GetKey(KeyCode.RightArrow) || Input.GetKey(KeyCode.D)) && Input.GetKeyDown(KeyCode.Space))
-        {
-            // Show the jumping animation
-            animator.SetInteger("State", 3);
             
-            // Return to jumping animation after a delay
-            StartCoroutine(StateTransition(0.5f, 4));
+            // Reset jumping state
+            isJumping = false;
         }
     }
 
@@ -82,5 +125,34 @@ public class PlayerManager : MonoBehaviour
     {
         yield return new WaitForSeconds(delay);
         animator.SetInteger("State", state);
+    }
+
+    public void OnRunButtonDown()
+    {
+        isRunning = true;
+    }
+
+    public void OnRunButtonUp()
+    {
+        isRunning = false;
+    }
+
+    public void OnJumpButtonDown()
+    {
+        // Only allow jumping if the player is grounded
+        if (isGrounded)
+        {
+            isJumping = true;
+        }
+    }
+
+    public void RunButtonPressed()
+    {
+        isRunButtonPressed = true;
+    }
+
+    public void RunButtonReleased()
+    {
+        isRunButtonPressed = false;
     }
 }
